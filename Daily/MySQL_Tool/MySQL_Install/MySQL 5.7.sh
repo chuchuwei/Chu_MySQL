@@ -1,21 +1,16 @@
-### 数据库安装
-
-> percona mysql 5.7.18
-
-```shell
-# 安装脚本
 #!/bin/bash
-
+yum -y install libaio
 DIR=`pwd`
 DATE=`date +%Y%m%d%H%M%S`
 
-#\mv /alidata/mysql /alidata/mysql.bak.$DATE &> /dev/null
+\mv /alidata/mysql /alidata/mysql.bak.$DATE &> /dev/null
 mkdir -p /alidata/mysql
 mkdir -p /alidata/mysql/data
 mkdir -p /alidata/mysql/log
 mkdir -p /alidata/install
 mkdir -p /usr/local/mysql/bin
-mkdir -p /alidata/mysql/mybinlog
+
+cd /alidata/install
 if [ `uname -m` == "x86_64" ];then   #查看是系统否是64位的，如果是就下载64位的包
   rm -rf mysql-5.7.17-linux-glibc2.5-x86_64
   if [ ! -f mysql-5.7.17-linux-glibc2.5-x86_64.tar.gz ];then
@@ -23,14 +18,23 @@ if [ `uname -m` == "x86_64" ];then   #查看是系统否是64位的，如果是�
   fi
   tar -xzvf mysql-5.7.17-linux-glibc2.5-x86_64.tar.gz
   mv mysql-5.7.17-linux-glibc2.5-x86_64/* /alidata/mysql
+#else
+#  rm -rf mysql-5.7.17-linux-glibc2.5-i686
+#  if [ ! -f mysql-5.7.17-linux-glibc2.5-i686.tar.gz ];then
+#  wget http://dev.mysql.com/get/Downloads/MySQL-5.7/mysql-5.7.17-linux-glibc2.5-i686.tar.gz
+#  fi
+#  tar -xzvf mysql-5.7.17-linux-glibc2.5-i686.tar.gz
+#  mv mysql-5.7.17-linux-glibc2.5-i686/* /alidata/mysql
+
 fi
+
 #install mysql
 groupadd mysql
 useradd -g mysql -s /sbin/nologin mysql
 
 \cp -f /alidata/mysql/support-files/mysql.server /etc/init.d/mysqld
-sed -i 's#^basedir=$#basedir=/alidata/mysql#' /etc/init.d/mysqld
-sed -i 's#^datadir=$#datadir=/alidata/mysql/data#' /etc/init.d/mysqld
+sed -i 's/^basedir=$/basedir=\/alidata\/mysql/' /etc/init.d/mysqld
+sed -i 's/^datadir=$/datadir=\/alidata\/mysql\/data/' /etc/init.d/mysqld
 cat > /etc/my.cnf <<END
 [client]
 port = 3306
@@ -88,8 +92,8 @@ max_binlog_size = 1G
 expire_logs_days = 30
 master_info_repository = TABLE
 relay_log_info_repository = TABLE
-#gtid_mode = on
-#enforce_gtid_consistency = 1
+gtid_mode = on
+enforce_gtid_consistency = 1
 log_slave_updates
 binlog_format = row
 binlog_checksum = 1
@@ -169,11 +173,8 @@ innodb_monitor_enable="module_adaptive_hash"
 quick
 max_allowed_packet = 32M
 END
-
-chown -R mysql:mysql /alidata/mysql/
-chown -R mysql:mysql /alidata/mysql/data/
-chown -R mysql:mysql /alidata/mysql/log
-/alidata/mysql/bin/mysqld --initialize-insecure --datadir=/alidata/mysql/data/  --user=mysql
+chown -R mysql. /alidata/mysql/
+/alidata/mysql/bin/mysqld --initialize-insecure --datadir=/alidata/mysql/data/ --basedir=/alidata/mysql/ --user=mysql
 ln -s /alidata/mysql/bin/mysqld /usr/local/mysql/bin/mysqld
 chmod 755 /etc/init.d/mysqld
 /etc/init.d/mysqld start
@@ -183,109 +184,3 @@ if ! cat /etc/profile | grep "export PATH=\$PATH:/alidata/mysql/bin" &> /dev/nul
 	echo "export PATH=\$PATH:/alidata/mysql/bin" >> /etc/profile
 fi
 source /etc/profile
-cd $DIR
-bash
-```
-
-### 数据库安装
-
-> mysql 5.6.15
-
-```shell
-# 安装脚本
-#!/bin/bash
-
-DIR=`pwd`
-DATE=`date +%Y%m%d%H%M%S`
-
-#\mv /alidata/mysql /alidata/mysql.bak.$DATE &> /dev/null
-mkdir -p /alidata/mysql
-mkdir -p /alidata/mysql/data
-mkdir -p /alidata/mysql/log
-mkdir -p /alidata/install
-mkdir -p /usr/local/mysql/bin
-mkdir -p /alidata/mysql/mybinlog
-cd /alidata/install
-if [ `uname -m` == "x86_64" ];then
-  rm -rf mysql-5.6.15-linux-glibc2.5-x86_64
-  if [ ! -f mysql-5.6.15-linux-glibc2.5-x86_64.tar.gz ];then
-	 wget http://oss.aliyuncs.com/aliyunecs/onekey/mysql/mysql-5.6.15-linux-glibc2.5-x86_64.tar.gz
-  fi
-  tar -xzvf mysql-5.6.15-linux-glibc2.5-x86_64.tar.gz
-  mv mysql-5.6.15-linux-glibc2.5-x86_64/* /alidata/mysql
-fi
-#install mysql
-groupadd mysql
-useradd -g mysql -s /sbin/nologin mysql
-
-\cp -f /alidata/mysql/support-files/mysql.server /etc/init.d/mysqld
-sed -i 's#^basedir=$#basedir=/alidata/mysql#' /etc/init.d/mysqld
-sed -i 's#^datadir=$#datadir=/alidata/mysql/data#' /etc/init.d/mysqld
-cat > /etc/my.cnf <<END
-[client]
-port = 3306
-socket = /alidata/mysql/mysql.sock
-[mysqld]
-port = 3306
-socket = /alidata/mysql/mysql.sock
-basedir=/alidata/mysql/
-datadir=/alidata/mysql/data/
-pid-file = /alidata/mysql/mysql-01.pid
-log-bin=/alidata/mysql/log/mysql-bin.log
-server_id = 2
-#mysql5.6中下三个参数要同时添加，不然启动会报错
-gtid_mode=on
-log-slave-updates=ON
-enforce_gtid_consistency=true
-binlog_format=row
-skip-external-locking
-log_error=/alidata/mysql/log/error.log
-key_buffer_size = 16M
-max_allowed_packet = 1M
-table_open_cache = 64
-sort_buffer_size = 512K
-net_buffer_length = 8K
-read_buffer_size = 256K
-read_rnd_buffer_size = 512K
-myisam_sort_buffer_size = 8M
-
-sql_mode=NO_ENGINE_SUBSTITUTION,STRICT_TRANS_TABLES
-
-[mysqldump]
-quick
-max_allowed_packet = 16M
-
-[mysql]
-no-auto-rehash
-
-[myisamchk]
-key_buffer_size = 20M
-sort_buffer_size = 20M
-read_buffer = 2M
-write_buffer = 2M
-[mysqlhotcopy]
-interactive-timeout
-END
-
-chown -R mysql:mysql /alidata/mysql/
-chown -R mysql:mysql /alidata/mysql/data/
-chown -R mysql:mysql /alidata/mysql/log
-/alidata/mysql/scripts/mysql_install_db --datadir=/alidata/mysql/data/ --basedir=/alidata/mysql --user=mysql
-ln -s /alidata/mysql/bin/mysqld /usr/local/mysql/bin/mysqld
-chmod 755 /etc/init.d/mysqld
-/etc/init.d/mysqld start
-
-#add PATH
-if ! cat /etc/profile | grep "export PATH=\$PATH:/alidata/mysql/bin" &> /dev/null;then
-	echo "export PATH=\$PATH:/alidata/mysql/bin" >> /etc/profile
-fi
-source /etc/profile
-cd $DIR
-bash
-```
-
-### 注意
-
-1 客户环境版本有冲突时可以先将包下载到本地，删除脚本的安装步骤即可
-
-2 客户环境时配置文件替换成客户的配置文件
