@@ -1,0 +1,27 @@
+root@MySQL-01 14:01:  [(none)]> show variables like "lower%";
++------------------------+-------+
+| Variable_name          | Value |
++------------------------+-------+
+| lower_case_file_system | OFF   |
+| lower_case_table_names | 0     |
++------------------------+-------+
+2 rows in set (0.05 sec)
+
+lower_case_table_names=0 代表大小写敏感
+lower_case_table_names=1 代表大小写不敏感
+
+mysql默认是区分大小的
+
+想要设置大小写不敏感需要在配置文件中加入 vim /etc/my.cnf
+lower_case_table_names=1
+然后重启数据库
+
+
+mysql8 
+
+1 设置大小写不敏感需要在初始化数据库之前，如果初始化数据库以后在设置会报错
+2 如果是rpm安装的话
+1）停服务
+2）清空数据 rm -rf /var/lib/mysql/*
+3)配置文件添加
+4）启动服务
