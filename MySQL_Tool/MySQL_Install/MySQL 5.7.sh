@@ -14,10 +14,10 @@ cd /alidata/install
 if [ `uname -m` == "x86_64" ];then   #查看是系统否是64位的，如果是就下载64位的包
   rm -rf mysql-5.7.17-linux-glibc2.5-x86_64
   if [ ! -f mysql-5.7.17-linux-glibc2.5-x86_64.tar.gz ];then
-	 wget http://zy-res.oss-cn-hangzhou.aliyuncs.com/mysql/mysql-5.7.17-linux-glibc2.5-x86_64.tar.gz
+	 wget https://downloads.mysql.com/archives/get/p/23/file/mysql-5.7.38-linux-glibc2.12-x86_64.tar.gz
   fi
-  tar -xzvf mysql-5.7.17-linux-glibc2.5-x86_64.tar.gz
-  mv mysql-5.7.17-linux-glibc2.5-x86_64/* /alidata/mysql
+  tar -xzvf mysql-5.7.38-linux-glibc2.12-x86_64.tar.gz
+  mv mysql-5.7.38-linux-glibc2.12-x86_64.tar.gz/* /alidata/mysql
 #else
 #  rm -rf mysql-5.7.17-linux-glibc2.5-i686
 #  if [ ! -f mysql-5.7.17-linux-glibc2.5-i686.tar.gz ];then
